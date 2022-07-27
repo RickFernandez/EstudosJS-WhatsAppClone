@@ -1,53 +1,89 @@
+const pdfjsLib = require('pdfjs-dist')
+const path = require('path')
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = path.resolve(
+  __dirname,
+  '../../dist/pdf.worker.bundle.js'
+)
+
 export class DocumentPreviewController {
+  constructor(file) {
+    this._file = file
+  }
 
-    constructor(file) {
+  getPreviewData() {
+    return new Promise((resolve, reject) => {
+      let reader = new FileReader()
 
-        this._file = file;
+      switch (this._file.type) {
+        case 'image/png':
+        case 'image/jpeg':
+        case 'image/jpg':
+        case 'image/gif':
+          reader.onload = e => {
+            resolve({
+              src: reader.result,
+              info: this._file.name
+            })
+          }
+          reader.onerror = erro => {
+            reject(erro)
+          }
 
-    }
+          reader.readAsDataURL(this._file)
+          break
 
-    getPreviewData() {
+        case 'application/pdf':
+          reader.onload = e => {
+            pdfjsLib
+              .getDocument(new Uint8Array(reader.result))
+              .then(pdf => {
+                pdf
+                  .getPage(1)
+                  .then(page => {
+                    let viewport = page.getViewport(1)
 
-        return new Promise((resolve, reject) => {
-            
-            switch (this._file.type) {
+                    let canvas = document.createElement('canvas')
 
-                case "image/png":
-                case "image/jpeg":
-                case "image/jpg":
-                case "image/gif":
-                    let reader = new FileReader();
-                    reader.onload = e => {
+                    let canvasContext = canvas.getContext('2d')
+
+                    canvas.width = viewport.width
+                    canvas.height = viewport.height
+
+                    page
+                      .render({
+                        canvasContext,
+                        viewport
+                      })
+                      .then(() => {
+                        let s = pdf.numPages > 1 ? 's' : ''
 
                         resolve({
-                            src:  reader.result,
-                            info: this._file.name
-                        });
+                          src: canvas.toDataURL('image/png'),
+                          info: `${pdf.numPages} página${s}`
+                        })
+                      })
+                      .catch(err => {
+                        reject(err)
+                      })
+                  })
+                  .catch(err => {
+                    reject(err)
+                  })
+              })
+              .catch(err => {
+                reject(err)
+              })
+          }
 
+          reader.readAsArrayBuffer(this._file)
 
-                    }
-                    reader.onerror = erro => {
+          break
 
-                        reject(erro);
-
-                    }
-
-                    reader.readAsDataURL(this._file);
-                    break;
-
-                case "application/pdf":
-
-                    break;
-
-                default:
-                    reject();
-                    break;
-                    
-
-            }
-
-        });
-
-    }
-
+        default:
+          reject()
+          break
+      }
+    })
+  }
 }
