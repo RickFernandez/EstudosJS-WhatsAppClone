@@ -2,14 +2,16 @@ import { Format } from './../utils/Format'
 import { CameraController } from './CameraController'
 import { MicrophoneController } from './MicrophoneController'
 import { DocumentPreviewController } from './DocumentPreviewController'
+import { Firebase } from './../utils/Firebase'
 
 export default class WhatsAppController {
   constructor() {
-    console.log('WhatsApp Controller')
+    console.log('WhatsApp Controller Ok')
 
     this.elementsPrototype()
     this.loadElements()
     this.initEvents()
+    this._firebase = new Firebase();
   }
 
   // Recupera o ID de todos os elementos da tela, criando um objeto para cada
