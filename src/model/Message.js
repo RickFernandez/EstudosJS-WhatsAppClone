@@ -52,7 +52,7 @@ export class Message extends Model {
   getViewElement(me = true) {
 
     let div = document.createElement('div')
-    div.className = 'message'
+    div.className = 'message' 
 
     switch (this.type) {
 
@@ -318,7 +318,7 @@ export class Message extends Model {
     
       default:
         div.innerHTML = `
-          <div class="font-style _3DFk6 tail" id="${this.id}">
+          <div class="font-style _3DFk6 tail" id="_${this.id}">
               <span class="tail-container"></span>
               <span class="tail-container highlight"></span>
               <div class="Tkt2p">

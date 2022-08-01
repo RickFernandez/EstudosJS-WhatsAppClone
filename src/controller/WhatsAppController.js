@@ -186,24 +186,28 @@ export default class WhatsAppController {
       this.el.main.css({
         display: 'flex'
       })
+      
+      this.el.panelMessagesContainer.innerHTML = "";
 
       Message.getRef(this._contactActive.chatId).orderBy('timeStamp').onSnapshot(docs => {
 
-        this.el.panelMessagesContainer.innerHTML = "";
+        let scrollTop = this.el.panelMessagesContainer.scrollTop;
+        let scrollTopMax = (this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight);
+        let autoScroll = (scrollTop >= scrollTopMax);
 
         docs.forEach(doc => {
 
           let data = doc.data;
           data.id = doc.id;
 
-          // se o primeiro índice do id for um número, colocamos em UNICODE
-          if (typeof parseInt(data.id[0]) === 'number') 
-          {
-              data.id = '\\3' + data.id;
+          // // se o primeiro índice do id for um número, colocamos em UNICODE
+          // if (typeof parseInt(data.id[0]) === 'number') 
+          // {
+          //     data.id = '\\3' + data.id;
           
-          }
+          // }
 
-          if (!this.el.panelMessagesContainer.querySelector("#" + data.id)) {
+          if (!this.el.panelMessagesContainer.querySelector("#_" + data.id)) {            
 
             let message = new Message();
   
@@ -218,6 +222,16 @@ export default class WhatsAppController {
           }
 
         })
+
+        if (autoScroll) {
+
+          this.el.panelMessagesContainer.scrollTop = (this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight)
+ 
+        } else {
+
+          this.el.panelMessagesContainer.scrollTop = scrollTop;
+
+        }
 
       })
 
@@ -659,6 +673,22 @@ export default class WhatsAppController {
 
         this.el.inputText.dispatchEvent(new Event('keyup'))
       })
+    })
+
+    this.el.inputSearchContacts.on('keyup', e => {
+
+      if (this.el.inputSearchContacts.value.length > 0) {
+
+        this.el.inputSearchContactsPlaceholder.hide();
+
+      } else {
+
+        this.el.inputSearchContactsPlaceholder.show();
+
+      }
+
+      this._user.getContacts(this.el.inputSearchContacts.value);
+
     })
   }
 
