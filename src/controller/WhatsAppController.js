@@ -9,13 +9,14 @@ import { Message } from '../model/Message'
 
 export default class WhatsAppController {
   constructor() {
-    console.log('WhatsApp Controller')
+    console.log('WhatsApp Controller Ok')
 
     this._firebase = new Firebase()
     this.initAuth()
     this.elementsPrototype()
     this.loadElements()
     this.initEvents()
+    this._firebase = new Firebase();
   }
 
   // Faz a autenticação do usuário
