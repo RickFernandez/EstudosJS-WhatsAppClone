@@ -31,4 +31,21 @@ export class Format {
 
     }
 
+    // Faz a formatação da hora das mensagens
+    static dateToTime(date, locale = 'pt-BR') {
+
+        return date.toLocaleTimeString(locale, {
+            hours: '2-digit',
+            minutes: '2-digit'
+        })
+
+    }
+
+    // Verifica se existe um timeStamp e se há uma função nele
+    static timeStampToTime(timeStamp) {
+
+        return (timeStamp && typeof timeStamp.toDate === 'function') ? Format.dateToTime(timeStamp.toDate()) : '';
+
+    }
+
 }

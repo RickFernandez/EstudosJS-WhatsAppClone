@@ -61,8 +61,6 @@ export class MicrophoneController extends ClassEvent {
         })
 
         console.log('file', file)
-
-        reader.readAsDataURL(file)
       })
 
       this._mediaRecorder.start()
