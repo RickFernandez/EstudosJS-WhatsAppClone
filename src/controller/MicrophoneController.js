@@ -1,93 +1,151 @@
-import { ClassEvent } from '../utils/ClassEvent'
+import { Format } from '../utils/Format';
+import { ClassEvent } from '../utils/ClassEvent';
 
 export class MicrophoneController extends ClassEvent {
-  constructor() {
-    super()
 
-    this._available = false
+    constructor(){
 
-    this._mimeType = 'audio/webm'
+        super();
 
-    navigator.mediaDevices
-      .getUserMedia({
-        audio: true
-      })
-      .then(stream => {
-        this._available = true
+        this._available = false;
 
-        this._stream = stream
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
 
-        this.trigger('ready', this._stream)
-      })
-      .catch(err => {
-        console.error(err)
-      })
-  }
+            this._available = true;
 
-  isAvailable() {
-    return this._available
-  }
+            this._stream = stream;
 
-  stop() {
-    this._stream.getTracks().forEach(track => {
-      track.stop()
-    })
-  }
+            this.trigger('ready', {
+                sream: this._stream,
+                audio: this._audio
+            });
 
-  startRecorder() {
-    if (this.isAvailable()) {
-      this._mediaRecorder = new MediaRecorder(this._stream, {
-        mimeType: this._mimeType
-      })
+        }).catch(err => {
 
-      this._recordedChunks = []
+            console.error(err);
 
-      this._mediaRecorder.addEventListener('dataavailable', e => {
-        if (e.data.size > 0) {
-          this._recordedChunks.push(e.data)
+        });
+
+    }
+
+    stopRecorder(){
+
+        if (this._available) {
+        
+            this._mediaRecorder.stop();
+            this.stop();
+            this.stopTimer();
+
         }
-      })
 
-      this._mediaRecorder.addEventListener('stop', e => {
-        let blob = new Blob(this._recordedChunks, {
-          type: this._mimeType
-        })
-
-        let fileName = `rec${Date.now()}.webm`
-
-        let file = new File([blob], fileName, {
-          type: this._mimeType,
-          lastModified: Date.now()
-        })
-
-        console.log('file', file)
-      })
-
-      this._mediaRecorder.start()
-      this.startTimer()
     }
-  }
 
-  stopRecorder() {
-    if (this.isAvailable()) {
-      this._mediaRecorder.stop()
+    stopTimer(){
 
-      this.stop()
+        clearInterval(this._recordMicrophoneInterval);
 
-      this.stopTimer()
     }
-  }
 
-  // Faz o Timer da gravação de Áudio
-  startTimer() {
-    let start = Date.now()
+    startTimer(){
 
-    this._recordMicrophoneInterval = setInterval(() => {
-      this.trigger('recordtimer', Date.now() - start)
-    }, 100)
-  }
+        let start = Date.now();
 
-  stopTimer() {
-    clearInterval(this._recordMicrophoneInterval)
-  }
+        this._recordMicrophoneInterval = setInterval(() => {
+
+            this.trigger('timer', {
+                displayTimer: Format.toTime(Date.now() - start)
+            });
+
+        }, 100);
+
+    }
+
+    startRecorder(options = {}){
+
+        if (this._available) {
+
+            this.startTimer();
+
+            this._mediaRecorder = new MediaRecorder(this._stream, Object.assign(options, {
+                mimeType: 'audio/webm'
+            }));
+
+            this._recordedChunks = [];
+
+            this._mediaRecorder.addEventListener('dataavailable', e => {
+
+                if (e.data.size > 0) this._recordedChunks.push(e.data);
+
+            });
+
+            this._mediaRecorder.addEventListener('stop', () => {
+
+                let blob = new Blob(this._recordedChunks, {
+                    type: 'audio/webm'
+                });
+
+                let cx = new AudioContext();
+
+                var fileReader = new FileReader();
+                
+                fileReader.onload = e => {
+
+                    cx.decodeAudioData(fileReader.result).then(decode => {
+
+                        let file = new File([blob], 'rec' + new Date().getTime() + '.webm', {
+                            type: 'audio/webm',
+                            lastModified: Date.now()
+                        });
+
+                        this.trigger('recorded', file, decode);
+
+                    });
+
+                };
+
+                fileReader.readAsArrayBuffer(blob);                
+
+            });
+
+            this._mediaRecorder.start();
+
+        }
+
+    }
+
+    play(){
+
+        if (this._available) {
+
+            this._audio = new Audio();
+
+            this._audio.src = URL.createObjectURL(this._stream);
+
+            this._audio.play();
+
+            this.trigger('play', {
+                sream: this._stream,
+                audio: this._audio
+            });
+
+        }
+
+    }
+
+    stop(){
+
+        if (this._available) {
+
+            this._stream.getTracks().forEach(track => {
+
+                track.stop();
+
+            });
+
+            this.trigger('stop');
+
+        }
+
+    }
+
 }

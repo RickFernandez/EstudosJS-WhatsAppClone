@@ -1,98 +1,89 @@
-import { Firebase } from './../utils/Firebase'
-import { Model } from './model'
+import { Model } from '../utils/Model';
+import { Firebase } from '../utils/Firebase';
+
 
 export class User extends Model {
-  constructor(id) {
-    super()
 
-    if (id) this.getById(id)
-  }
+    get name() { return this._data.name; }
+    set name(value) { this._data.name = value; }
 
-  get name() {
-    return this._data.name
-  }
-  set name(name) {
-    this._data.name = name
-  }
+    get email() { return this._data.email; }
+    set email(value) { this._data.email = value; }
 
-  get email() {
-    return this._data.email
-  }
-  set email(email) {
-    this._data.email = email
-  }
+    get photo() { return this._data.photo; }
+    set photo(value) { this._data.photo = value; }
 
-  get photo() {
-    return this._data.photo
-  }
-  set photo(photo) {
-    this._data.photo = photo
-  }
+    get chatId() { return this._data.chatId; }
+    set chatId(value) { this._data.chatId = value; }
 
-  get chatId() {
-    return this._data.chatId
-  }
-  set chatId(chatId) {
-    this._data.chatId = chatId
-  }
+    static getRef(){
+        return Firebase.db().collection('users');
+    }
 
-  getById(id) {
-    return new Promise((s, f) => {
-      // Retorna os 'documentos' do usuário salvo no bd através de um id
-      User.findByEmail(id).onSnapshot(doc => {
-        this.fromJSON(doc.data())
+    constructor(key){
+        
+        super();
 
-        s(doc)
-      })
-    })
-  }
+        this.key = key;
 
-  save() {
-    return User.findByEmail(this.email).set(this.toJSON())
-  }
+        this.getByKey();
 
-  static getContactsRef(id) {
-    return User.getRef().doc(id).collection('contacts')
-  }
+    }
 
-  // Retorna uma referência do BD
-  static getRef() {
-    return Firebase.db().collection('/users')
-  }
+    getByKey(){
 
-  // Procura os documentos/ dados de uma referência específica do bd
-  static findByEmail(email) {
-    return User.getRef().doc(email)
-  }
+        return new Promise((s, f)=>{
 
-  // Cria uma nova coleção no bd apenas com o email do usuário (converte o email para um Base64 antes de salvar)
-  addContact(contact) {
-    return User.getContactsRef(this.email).doc(btoa(contact.email)).set(contact.toJSON())
-  }
+            User.getRef().doc(this.key).onSnapshot(doc => {
 
-  getContacts(filter = '') {
+                this.doc = doc;
 
-    return new Promise((s, f) => {
+                this.fromJSON(doc.data());
 
-      User.getContactsRef(this.email).where('name', '>=', filter).onSnapshot(docs => {
+                s(doc);
 
-        let contacts = []
+            });
 
-        docs.forEach(doc => {
+        });        
 
-          let data = doc.data()
+    }
 
-          data.id = doc.id
+    save(){
 
-          contacts.push(data)
+        return User.getRef().doc(this.key).set(this.toJSON());
 
-        })
+    }
 
-        this.trigger('contactschange', docs)
+    addContact(contact){
 
-        s(contacts)
+        return User.getRef().doc(this.key).collection('contacts').doc(contact.email).set(contact.toJSON());
 
-      })
-    })
-  }
+    }
+
+    getContacts(){
+
+        return new Promise((s, f)=>{
+
+            User.getRef().doc(this.key).collection('contacts').onSnapshot(docs => {
+
+                let contacts = [];
+
+                docs.forEach(doc=>{
+
+                    let data = doc.data();
+                    data._key = doc.key;
+                    contacts.push(data);
+
+                });
+
+                s(docs);
+
+                this.trigger('contactschange', contacts);
+
+            });
+
+        });        
+
+    }
+
 }

@@ -2,18 +2,11 @@ export class CameraController {
   constructor(videoEl) {
     this._videoEl = videoEl
 
-    // Questiona ao usuário a permissão do uso da mídia dele (neste cado, da câmera/ vídeo)
     navigator.mediaDevices
       .getUserMedia({
         video: true
       })
       .then(stream => {
-        /*
-                src - Informa a fonte do vídeo
-                createObjectURL() - cria um arquivo no formato binário
-            */
-        // this._videoEl.src = URL.createObjectURL(stream);
-        this._stream = stream
         let mediaStream = new MediaStream(stream)
         this._videoEl.srcObject = mediaStream
         this._videoEl.play()
@@ -21,12 +14,6 @@ export class CameraController {
       .catch(err => {
         console.error(err)
       })
-  }
-
-  stop() {
-    this._stream.getTracks().forEach(track => {
-      track.stop()
-    })
   }
 
   takePicture(mimeType = 'image/png') {
@@ -39,6 +26,12 @@ export class CameraController {
 
     context.drawImage(this._videoEl, 0, 0, canvas.width, canvas.height)
 
-    return canvas.toDataURL(mimeType) // Converte o vídeo da camera para um Base64
+    return canvas.toDataURL(mimeType)
+  }
+
+  stop() {
+    this._stream.getTracks().forEach(track => {
+      track.stop()
+    })
   }
 }

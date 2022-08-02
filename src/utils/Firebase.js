@@ -12,60 +12,67 @@ import 'firebase/auth'
 import 'firebase/firestore'
 
 export class Firebase {
-  constructor() {
-    this._firebaseConfig = {
-      apiKey: 'AIzaSyAjKOJISbG6ZoAOrZdC44JHDalRPLKJXGI',
-      authDomain: 'whatsapp-clone-a0aaf.firebaseapp.com',
-      projectId: 'whatsapp-clone-a0aaf',
-      storageBucket: 'whatsapp-clone-a0aaf.appspot.com',
-      messagingSenderId: '565744249453',
-      appId: '1:565744249453:web:c314c77c0c36593a94ed64'
+
+    constructor() {
+
+        this.init();
+
     }
 
-    this.init()
-  }
+    init(){
 
-  init() {
-    if (!window._initializedFirebase) {
-      // Initialize Firebase
-      firebase.initializeApp(this._firebaseConfig)
+        if (!window._initializedFirebase) {
 
-      // Faz com que o programa fique contanstemente de olho no Firebase
-      firebase.firestore().settings({
-        timestampsInSnapshots: true
-      })
+            firebase.initializeApp({
+                apiKey: 'AIzaSyAjKOJISbG6ZoAOrZdC44JHDalRPLKJXGI',
+                authDomain: 'whatsapp-clone-a0aaf.firebaseapp.com',
+                projectId: 'whatsapp-clone-a0aaf',
+                storageBucket: 'gs://whatsapp-clone-a0aaf.appspot.com/',
+            });
 
-      window._initializedFirebase = true
+            firebase.firestore().settings({
+                timestampsInSnapshots: true
+            });
+
+            window._initializedFirebase = true;
+
+        }
+
     }
-  }
 
-  static db() {
-    return firebase.firestore()
-  }
+    initAuth(){
 
-  static hd() {
-    return firebase.storage()
-  }
+        return new Promise((resolve, reject)=>{
 
-  initAuth() {
-    return new Promise((res, rej) => {
-      let provider = new firebase.auth.GoogleAuthProvider()
+            let provider = new firebase.auth.GoogleAuthProvider();
 
-      firebase
-        .auth()
-        .signInWithPopup(provider)
-        .then(result => {
-          let token = result.credential.accessToken
-          let user = result.user
+            firebase.auth().signInWithPopup(provider).then(function (result) {
 
-          res({
-            user,
-            token
-          })
-        })
-        .catch(err => {
-          rej(err)
-        })
-    })
-  }
+                let token = result.credential.accessToken;
+                let user = result.user;
+
+                resolve(user, token);
+
+            }).catch(function (error) {
+
+                reject(error);
+
+            });
+
+        });        
+
+    }
+
+    static db(){
+
+        return firebase.firestore();
+
+    }
+
+    static hd() {
+
+        return firebase.storage();
+
+    }
+
 }
